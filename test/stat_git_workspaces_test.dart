@@ -1,0 +1,8 @@
+import 'package:stat_git_workspaces/stat_git_workspaces.dart';
+import 'package:test/test.dart';
+
+void main() {
+  test('calculate', () {
+    expect(calculate(), 42);
+  });
+}
