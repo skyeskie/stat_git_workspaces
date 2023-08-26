@@ -13,11 +13,13 @@ class NonGitRepo extends DirStat {
 class GitRepoInfo extends DirStat {
   GitRepoInfo({
     required super.name,
+    required this.branch,
     this.origin,
     this.backup,
     this.upstream,
   });
 
+  String branch;
   GitRemote? origin;
   GitRemote? backup;
   GitRemote? upstream;

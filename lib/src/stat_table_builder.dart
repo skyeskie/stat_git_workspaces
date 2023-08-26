@@ -34,13 +34,23 @@ class StatTableBuilder {
 
   AnsiText _addNonGit(StatHeader header, String name) => switch (header) {
         StatHeader.repoName => AnsiText(name),
-        StatHeader.gitStatus => getColoredBool(false),
+        StatHeader.branch => AnsiText(
+            'Not Git',
+            foregroundColor: AnsiColor.red,
+          ),
         _ => blank,
       };
 
   AnsiText _addGit(StatHeader header, GitRepoInfo gitRepo) => switch (header) {
         StatHeader.repoName => AnsiText(gitRepo.name),
-        StatHeader.gitStatus => getColoredBool(true),
+        StatHeader.branch => AnsiText(gitRepo.branch,
+            foregroundColor: switch (gitRepo.branch) {
+              'mainline' => AnsiColor.greenYellow,
+              'master' => AnsiColor.orange1,
+              'main' => AnsiColor.greenYellow,
+              'dev' => AnsiColor.green,
+              _ => AnsiColor.cyan2,
+            }),
         StatHeader.backupRepo => formatRemote(gitRepo.backup),
         StatHeader.originRepo => formatRemote(gitRepo.origin),
         StatHeader.upstreamRepo => formatRemote(gitRepo.upstream),
@@ -96,7 +106,7 @@ class StatTableBuilder {
 
 enum StatHeader {
   repoName('Repository'),
-  gitStatus('Git'),
+  branch('Branch'),
   backupRepo('Backup'),
   originRepo('Origin'),
   upstreamRepo('Upstream'),

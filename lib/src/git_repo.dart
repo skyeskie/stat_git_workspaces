@@ -24,6 +24,7 @@ class GitRepo {
     }
     return GitRepoInfo(
       name: getRepoName(),
+      branch: await getCurrentBranch(),
       backup: await getRemoteInfo('nas'),
       origin: await getRemoteInfo('origin'),
       upstream: await getRemoteInfo('upstream'),
@@ -62,6 +63,13 @@ class GitRepo {
     final remotes = await getRemoteNames();
     if (!remotes.contains(remoteName)) return null;
     return GitRemote(name: remoteName, branch: 'TODO');
+  }
+
+  Future<String> getCurrentBranch() async {
+    return (await runGitCmd(
+      ['symbolic-ref', '--short', 'HEAD'],
+    ))
+        .single;
   }
 
   Future<List<String>> runGitCmd(List<String> command) async {
