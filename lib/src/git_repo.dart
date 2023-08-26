@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:stat_git_workspaces/src/repo_info.dart';
 
 class GitRepo {
   GitRepo({required this.root});
@@ -11,6 +12,16 @@ class GitRepo {
     Process.start(
       'git',
       ['status', '--porcelain=v2', '--show-stash', '--untracked-files=normal'],
+    );
+  }
+
+  Future<DirStat> getInfo() async {
+    if (!await checkIfGitDir()) {
+      return NonGitRepo(name: getRepoName());
+    }
+
+    return GitRepoInfo(
+      name: getRepoName(),
     );
   }
 
