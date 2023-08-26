@@ -53,7 +53,10 @@ class StatTableBuilder {
             }),
         StatHeader.backupRepo => formatRemote(gitRepo.backup),
         StatHeader.originRepo => formatRemote(gitRepo.origin),
-        StatHeader.upstreamRepo => formatRemote(gitRepo.upstream),
+        StatHeader.upstreamRepo => formatRemote(
+            gitRepo.upstream,
+            noRemoteColoring: AnsiColor.grey,
+          ),
       };
 
   AnsiTable build() => AnsiTable.fromMap(
@@ -71,11 +74,14 @@ class StatTableBuilder {
     AnsiX.printStyled(build(), textStyle: const AnsiTextStyle());
   }
 
-  static AnsiText formatRemote(GitRemote? remote) {
+  static AnsiText formatRemote(
+    GitRemote? remote, {
+    AnsiColor noRemoteColoring = AnsiColor.red,
+  }) {
     if (remote == null) {
       return AnsiText(
         'x',
-        foregroundColor: AnsiColor.red,
+        foregroundColor: noRemoteColoring,
         alignment: AnsiTextAlignment.center,
       );
     }
