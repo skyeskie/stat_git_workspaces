@@ -10,7 +10,7 @@ enum StatHeader implements TableHeaderEnum {
   backupRepo('Backup'),
   originRepo('Origin'),
   upstreamRepo('Upstream'),
-  otherRemotes('Remotes'),
+  // otherRemotes('Remotes'),
   ;
 
   const StatHeader(this.desc);
@@ -41,13 +41,13 @@ class StatTableBuilder extends TableBuilder<StatHeader> {
             await gitRepo.upstream,
             noRemoteColoring: AnsiColor.grey,
           ),
-        StatHeader.otherRemotes => AnsiText(
-            (await gitRepo.remoteNames)
-                .where(
-                  (element) => !['origin', 'nas', 'upstream'].contains(element),
-                )
-                .join(', '),
-          ).replaceEmptyWith(blank),
+        // StatHeader.otherRemotes => AnsiText(
+        //     (await gitRepo.remoteNames)
+        //         .where(
+        //           (element) => !['origin', 'nas', 'upstream'].contains(element),
+        //         )
+        //         .join(', '),
+        //   ).replaceEmptyWith(blank),
       };
 
   static AnsiText formatRemote(

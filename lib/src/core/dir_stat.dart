@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:interact/interact.dart';
 import 'package:path/path.dart' as path;
 
 import 'git_remote.dart';
@@ -42,7 +43,7 @@ sealed class DirStat {
           const SystemEncoding().decoder,
         )
         .join();
-    return result.trim().split('\r?\n');
+    return result.trim().split('\n');
   }
 
   static Future<bool> checkIfGitDir(String workingDirectory) async {
