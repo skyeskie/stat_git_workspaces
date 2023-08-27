@@ -4,6 +4,7 @@ class GitRepo extends DirStat {
   GitRepo({
     required this.root,
     this.mode = CommandMode.batch,
+    required super.args,
   }) : super.fromDirectory(root);
 
   final Directory root;
@@ -26,11 +27,11 @@ class GitRepo extends DirStat {
         cache: true,
       );
 
-  Future<GitRemote?> get origin => getRemoteInfo('origin');
+  Future<GitRemote?> get origin => getRemoteInfo(args['origin']);
 
-  Future<GitRemote?> get backup => getRemoteInfo('nas');
+  Future<GitRemote?> get backup => getRemoteInfo(args['backup']);
 
-  Future<GitRemote?> get upstream => getRemoteInfo('upstream');
+  Future<GitRemote?> get upstream => getRemoteInfo(args['upstream']);
 
   // General commands
 

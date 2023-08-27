@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:args/args.dart';
 import 'package:interact/interact.dart';
 import 'package:path/path.dart' as path;
 
@@ -9,11 +10,16 @@ import 'multi_command.dart';
 part 'git_repo.dart';
 
 sealed class DirStat {
-  DirStat({required this.name});
+  DirStat({required this.name, required this.args});
 
-  DirStat.fromDirectory(Directory dir) : name = getNameFromDir(dir);
+  DirStat.fromDirectory(
+    Directory dir, {
+    required this.args,
+  }) : name = getNameFromDir(dir);
 
   final String name;
+
+  final ArgResults args;
 
   static String getNameFromDir(Directory dir) => path.basename(dir.path);
 
@@ -63,5 +69,5 @@ sealed class DirStat {
 }
 
 class NonGitRepo extends DirStat {
-  NonGitRepo({required super.name});
+  NonGitRepo({required super.name, required super.args});
 }
