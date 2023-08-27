@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/src/core/repo_info.dart';
+
+import 'git_repo.dart';
 
 abstract class TableBuilder<T extends TableHeaderEnum> {
   List<T> get enumCols;
@@ -22,13 +26,14 @@ abstract class TableBuilder<T extends TableHeaderEnum> {
     _table[header.desc]!.add(value);
   }
 
-  void add(DirStat repo) {
+  Future<void> add(DirStat repo) async {
     for (final header in enumCols) {
       _addField(
         header,
         switch (repo) {
           (NonGitRepo dir) => _addNonGit(header, dir.name),
-          (GitRepoInfo gitRepo) => addGitRow(header, gitRepo),
+          (GitRepo gitRepo) => await addGitRow(header, gitRepo),
+          _ => throw 'TODO: Rework sealed in again',
         },
       );
     }
@@ -47,7 +52,7 @@ abstract class TableBuilder<T extends TableHeaderEnum> {
     return blank;
   }
 
-  AnsiText addGitRow(T header, GitRepoInfo gitRepo);
+  FutureOr<AnsiText> addGitRow(T header, GitRepo gitRepo);
 
   AnsiTable build() => AnsiTable.fromMap(
         _table,

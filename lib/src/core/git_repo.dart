@@ -6,40 +6,19 @@ import 'git_remote.dart';
 import 'multi_command.dart';
 import 'repo_info.dart';
 
-class GitRepo {
+class GitRepo extends DirStat {
   GitRepo({
     required this.root,
     this.mode = CommandMode.batch,
-  });
+  }) : super.fromDirectory(root);
 
   final Directory root;
   final CommandMode mode;
 
   // ['status', '--porcelain=v2', '--show-stash', '--untracked-files=normal']
 
-  @Deprecated('Individual parts')
-  Future<DirStat> getInfo() async {
-    final isGit = await checkIfGitDir();
-    if (!isGit) {
-      return NonGitRepo(name: getRepoName());
-    }
-    return GitRepoInfo(
-      name: getRepoName(),
-      branch: await branch,
-      backup: await getRemoteInfo('nas'),
-      origin: await getRemoteInfo('origin'),
-      upstream: await getRemoteInfo('upstream'),
-      remoteNames: await remoteNames,
-    );
-  }
-
+  @override
   String get name => path.basename(root.path);
-
-  @Deprecated('use #name')
-  String getRepoName() => name;
-
-  @Deprecated('Call [DirStat.checkIfGitDir] before creation')
-  Future<bool> checkIfGitDir() => DirStat.checkIfGitDir(root.path);
 
   List<String>? _remotes;
 

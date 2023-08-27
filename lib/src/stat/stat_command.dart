@@ -19,10 +19,10 @@ class StatCommand extends MultiCommand {
   static const String command = 'stat';
 
   @override
-  Future<void> processGitRepo(repoInfo, mode) async => builder.add(repoInfo);
+  Future<void> processGitRepo(repo, mode) => builder.add(repo);
 
   @override
-  Future<void> processNonGitDir(dir, mode) async => builder.add(dir);
+  Future<void> processNonGitDir(dir, mode) => builder.add(dir);
 
   @override
   Future<int> afterProcess(CommandMode mode) {

@@ -2,7 +2,7 @@ import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/src/core/git_remote.dart';
 import 'package:stat_git_workspaces/src/core/table_builder.dart';
 
-import '../core/repo_info.dart';
+import '../core/git_repo.dart';
 
 enum StatHeader implements TableHeaderEnum {
   repoName('Repository'),
@@ -24,25 +24,25 @@ class StatTableBuilder extends TableBuilder<StatHeader> {
   List<StatHeader> get enumCols => StatHeader.values;
 
   @override
-  AnsiText addGitRow(StatHeader header, GitRepoInfo gitRepo) =>
+  Future<AnsiText> addGitRow(StatHeader header, GitRepo gitRepo) async =>
       switch (header) {
         StatHeader.repoName => AnsiText(gitRepo.name),
-        StatHeader.branch => AnsiText(gitRepo.branch,
-            foregroundColor: switch (gitRepo.branch) {
+        StatHeader.branch => AnsiText(await gitRepo.branch,
+            foregroundColor: switch (await gitRepo.branch) {
               'mainline' => AnsiColor.greenYellow,
               'master' => AnsiColor.orange1,
               'main' => AnsiColor.greenYellow,
               'dev' => AnsiColor.green,
               _ => AnsiColor.cyan2,
             }),
-        StatHeader.backupRepo => formatRemote(gitRepo.backup),
-        StatHeader.originRepo => formatRemote(gitRepo.origin),
+        StatHeader.backupRepo => formatRemote(await gitRepo.backup),
+        StatHeader.originRepo => formatRemote(await gitRepo.origin),
         StatHeader.upstreamRepo => formatRemote(
-            gitRepo.upstream,
+            await gitRepo.upstream,
             noRemoteColoring: AnsiColor.grey,
           ),
         StatHeader.otherRemotes => AnsiText(
-            gitRepo.remoteNames
+            (await gitRepo.remoteNames)
                 .where(
                   (element) => !['origin', 'nas', 'upstream'].contains(element),
                 )

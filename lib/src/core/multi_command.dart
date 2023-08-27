@@ -50,7 +50,7 @@ abstract class MultiCommand extends Command<int> {
 
   final config = Config.get();
 
-  Future<void> processGitRepo(GitRepoInfo repoInfo, CommandMode mode);
+  Future<void> processGitRepo(GitRepo repo, CommandMode mode);
 
   Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode);
 
@@ -66,11 +66,13 @@ abstract class MultiCommand extends Command<int> {
     final mode = determineCommandMode();
 
     for (final project in projects) {
-      final projectInfo = GitRepo(root: project);
-      if (await projectInfo.checkIfGitDir()) {
-        await processGitRepo(await projectInfo.getInfo() as GitRepoInfo, mode);
+      if (await DirStat.checkIfGitDir(project.path)) {
+        await processGitRepo(GitRepo(root: project), mode);
       } else {
-        processNonGitDir(NonGitRepo(name: projectInfo.getRepoName()), mode);
+        await processNonGitDir(
+          NonGitRepo(name: DirStat.getNameFromDir(project)),
+          mode,
+        );
       }
     }
 
