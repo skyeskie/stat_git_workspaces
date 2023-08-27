@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:ansix/ansix.dart';
-import 'package:stat_git_workspaces/src/core/repo_info.dart';
-
-import 'git_repo.dart';
+import 'package:stat_git_workspaces/src/core/dir_stat.dart';
 
 abstract class TableBuilder<T extends TableHeaderEnum> {
   List<T> get enumCols;
@@ -33,7 +31,6 @@ abstract class TableBuilder<T extends TableHeaderEnum> {
         switch (repo) {
           (NonGitRepo dir) => _addNonGit(header, dir.name),
           (GitRepo gitRepo) => await addGitRow(header, gitRepo),
-          _ => throw 'TODO: Rework sealed in again',
         },
       );
     }

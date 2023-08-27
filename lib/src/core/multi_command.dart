@@ -2,10 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
-import 'package:stat_git_workspaces/src/core/repo_info.dart';
+import 'package:stat_git_workspaces/src/core/dir_stat.dart';
 
 import '../../cfg.dart';
-import 'git_repo.dart';
 
 abstract class MultiCommand extends Command<int> {
   MultiCommand({

@@ -1,10 +1,4 @@
-import 'dart:io';
-
-import 'package:path/path.dart' as path;
-
-import 'git_remote.dart';
-import 'multi_command.dart';
-import 'repo_info.dart';
+part of 'dir_stat.dart';
 
 class GitRepo extends DirStat {
   GitRepo({

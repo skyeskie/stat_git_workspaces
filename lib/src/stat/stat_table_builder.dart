@@ -2,7 +2,7 @@ import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/src/core/git_remote.dart';
 import 'package:stat_git_workspaces/src/core/table_builder.dart';
 
-import '../core/git_repo.dart';
+import '../core/dir_stat.dart';
 
 enum StatHeader implements TableHeaderEnum {
   repoName('Repository'),

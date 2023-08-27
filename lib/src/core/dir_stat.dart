@@ -2,7 +2,12 @@ import 'dart:io';
 
 import 'package:path/path.dart' as path;
 
-class DirStat {
+import 'git_remote.dart';
+import 'multi_command.dart';
+
+part 'git_repo.dart';
+
+sealed class DirStat {
   DirStat({required this.name});
 
   DirStat.fromDirectory(Directory dir) : name = getNameFromDir(dir);
