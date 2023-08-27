@@ -1,24 +1,14 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:args/command_runner.dart';
-import 'package:stat_git_workspaces/cfg.dart';
+import 'package:stat_git_workspaces/src/core/repo_info.dart';
 
-import '../core/git_repo.dart';
+import '../core/multi_command.dart';
 import 'stat_table_builder.dart';
 
-class StatCommand extends Command<int> {
-  StatCommand() {
-    final config = Config.get();
-    argParser.addOption(
-      'workspace',
-      abbr: 'w',
-      aliases: ['ws', 'root', 'r'],
-      defaultsTo: config.getWorkspaceDir().path,
-      help: 'Workspace root containing Git projects',
-      valueHelp: '~/ws/',
-    );
-  }
+class StatCommand extends MultiCommand {
+  StatCommand() : super();
+
+  final builder = StatTableBuilder();
 
   @override
   String get description => 'Show information of all workspaces';
@@ -29,19 +19,16 @@ class StatCommand extends Command<int> {
   static const String command = 'stat';
 
   @override
-  FutureOr<int>? run() async {
-    final ws = Directory(argResults!['workspace']);
-    final projects = await ws.list().toList();
-    projects.retainWhere((element) => element is Directory);
-    projects.sort((a, b) => a.path.compareTo(b.path));
+  Future<void> processGitRepo(GitRepoInfo repoInfo) async =>
+      builder.add(repoInfo);
 
-    final builder = StatTableBuilder();
-    for (final project in projects) {
-      if (project is Directory) {
-        final projectInfo = GitRepo(root: project);
-        builder.add(await projectInfo.getInfo());
-      }
-    }
+  @override
+  Future<void> processNonGitDir(NonGitRepo dir) async => builder.add(dir);
+
+  @override
+  FutureOr<int>? run() async {
+    await super.run();
+
     builder.printToConsole();
     return 0;
   }
