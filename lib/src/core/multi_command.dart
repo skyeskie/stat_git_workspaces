@@ -8,7 +8,10 @@ import '../../cfg.dart';
 import 'git_repo.dart';
 
 abstract class MultiCommand extends Command<int> {
-  MultiCommand() {
+  MultiCommand({
+    bool addBatchOption = true,
+    bool addDryRunOption = true,
+  }) {
     argParser.addOption(
       'workspace',
       abbr: 'w',
@@ -18,20 +21,40 @@ abstract class MultiCommand extends Command<int> {
       valueHelp: '~/ws/',
     );
 
-    argParser.addFlag('batch',
-        abbr: 'b', defaultsTo: false, help: 'Automatically run commands');
+    argParser.addFlag(
+      'batch',
+      abbr: 'b',
+      defaultsTo: !addBatchOption,
+      help: 'Automatically run commands',
+      hide: addBatchOption,
+    );
 
-    argParser.addFlag('dry-run',
-        abbr: 'd',
-        defaultsTo: false,
-        help: 'Print print commands instead of running. Implies -b');
+    argParser.addFlag(
+      'dry-run',
+      abbr: 'd',
+      defaultsTo: false,
+      help: 'Print print commands instead of running. Implies -b',
+      hide: addDryRunOption,
+    );
+  }
+
+  CommandMode determineCommandMode() {
+    if (argResults?['dry-run']) return CommandMode.printCommands;
+    bool? batchFlag = argResults?['batch'];
+    return switch (batchFlag) {
+      (true) => CommandMode.batch,
+      (false) => CommandMode.confirmEach,
+      (null) => CommandMode.noBatchOption,
+    };
   }
 
   final config = Config.get();
 
-  Future<void> processGitRepo(GitRepoInfo repoInfo);
+  Future<void> processGitRepo(GitRepoInfo repoInfo, CommandMode mode);
 
-  Future<void> processNonGitDir(NonGitRepo dir);
+  Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode);
+
+  Future<int> afterProcess(CommandMode mode) async => 0;
 
   @override
   FutureOr<int>? run() async {
@@ -40,15 +63,30 @@ abstract class MultiCommand extends Command<int> {
     final projects = lsAll.whereType<Directory>().toList(growable: false);
     projects.sort((a, b) => a.path.compareTo(b.path));
 
+    final mode = determineCommandMode();
+
     for (final project in projects) {
       final projectInfo = GitRepo(root: project);
       if (await projectInfo.checkIfGitDir()) {
-        await processGitRepo(await projectInfo.getInfo() as GitRepoInfo);
+        await processGitRepo(await projectInfo.getInfo() as GitRepoInfo, mode);
       } else {
-        processNonGitDir(NonGitRepo(name: projectInfo.getRepoName()));
+        processNonGitDir(NonGitRepo(name: projectInfo.getRepoName()), mode);
       }
     }
 
-    return 0;
+    return afterProcess(mode);
   }
+}
+
+enum CommandMode {
+  batch(confirm: false),
+  confirmEach(confirm: true),
+  printCommands(execute: false, confirm: false),
+  noBatchOption(execute: true, confirm: false),
+  ;
+
+  const CommandMode({this.execute = true, required this.confirm});
+
+  final bool execute;
+  final bool confirm;
 }

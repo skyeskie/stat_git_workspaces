@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:stat_git_workspaces/src/core/repo_info.dart';
+import 'package:ansix/ansix.dart';
 
 import '../core/multi_command.dart';
 import 'stat_table_builder.dart';
 
 class StatCommand extends MultiCommand {
-  StatCommand() : super();
+  StatCommand() : super(addBatchOption: false);
 
   final builder = StatTableBuilder();
 
@@ -19,17 +19,22 @@ class StatCommand extends MultiCommand {
   static const String command = 'stat';
 
   @override
-  Future<void> processGitRepo(GitRepoInfo repoInfo) async =>
-      builder.add(repoInfo);
+  Future<void> processGitRepo(repoInfo, mode) async => builder.add(repoInfo);
 
   @override
-  Future<void> processNonGitDir(NonGitRepo dir) async => builder.add(dir);
+  Future<void> processNonGitDir(dir, mode) async => builder.add(dir);
 
   @override
-  FutureOr<int>? run() async {
-    await super.run();
-
-    builder.printToConsole();
-    return 0;
+  Future<int> afterProcess(CommandMode mode) {
+    if (mode.execute) {
+      builder.printToConsole();
+    } else {
+      AnsiX.printStyled(
+        'Does not support non-execute modes'.withForegroundColor(AnsiColor.red),
+        textStyle: const AnsiTextStyle(),
+      );
+      return Future.value(1);
+    }
+    return super.afterProcess(mode);
   }
 }
