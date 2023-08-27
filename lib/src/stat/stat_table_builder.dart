@@ -1,47 +1,30 @@
 import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/src/core/git_remote.dart';
+import 'package:stat_git_workspaces/src/core/table_builder.dart';
 
 import '../core/repo_info.dart';
 
-class StatTableBuilder {
-  static final blank = AnsiText(
-    '-',
-    foregroundColor: AnsiColor.grey27,
-    alignment: AnsiTextAlignment.center,
-  );
+enum StatHeader implements TableHeaderEnum {
+  repoName('Repository'),
+  branch('Branch'),
+  backupRepo('Backup'),
+  originRepo('Origin'),
+  upstreamRepo('Upstream'),
+  ;
 
-  final Map<String, List<AnsiText>> _table = Map.fromEntries(
-    StatHeader.values.map(
-      (header) => MapEntry(header.desc, <AnsiText>[]),
-    ),
-  );
+  const StatHeader(this.desc);
 
-  void _addField(StatHeader header, AnsiText value) {
-    _table[header.desc]!.add(value);
-  }
+  @override
+  final String desc;
+}
 
-  void add(DirStat repo) {
-    for (final header in StatHeader.values) {
-      _addField(
-        header,
-        switch (repo) {
-          (NonGitRepo dir) => _addNonGit(header, dir.name),
-          (GitRepoInfo gitRepo) => _addGit(header, gitRepo),
-        },
-      );
-    }
-  }
+class StatTableBuilder extends TableBuilder<StatHeader> {
+  @override
+  List<StatHeader> get enumCols => StatHeader.values;
 
-  AnsiText _addNonGit(StatHeader header, String name) => switch (header) {
-        StatHeader.repoName => AnsiText(name),
-        StatHeader.branch => AnsiText(
-            'Not Git',
-            foregroundColor: AnsiColor.red,
-          ),
-        _ => blank,
-      };
-
-  AnsiText _addGit(StatHeader header, GitRepoInfo gitRepo) => switch (header) {
+  @override
+  AnsiText addGitRow(StatHeader header, GitRepoInfo gitRepo) =>
+      switch (header) {
         StatHeader.repoName => AnsiText(gitRepo.name),
         StatHeader.branch => AnsiText(gitRepo.branch,
             foregroundColor: switch (gitRepo.branch) {
@@ -58,21 +41,6 @@ class StatTableBuilder {
             noRemoteColoring: AnsiColor.grey,
           ),
       };
-
-  AnsiTable build() => AnsiTable.fromMap(
-        _table,
-        headerTextTheme: AnsiTextTheme(
-          style: AnsiTextStyle(
-            bold: true,
-          ),
-          foregroundColor: AnsiColor.cyan1,
-        ),
-        border: AnsiBorder(type: AnsiBorderType.header),
-      );
-
-  void printToConsole() {
-    AnsiX.printStyled(build(), textStyle: const AnsiTextStyle());
-  }
 
   static AnsiText formatRemote(
     GitRemote? remote, {
@@ -100,25 +68,4 @@ class StatTableBuilder {
       alignment: AnsiTextAlignment.center,
     );
   }
-
-  static AnsiText getColoredBool(bool value) {
-    if (value) {
-      return AnsiText('Yes', foregroundColor: AnsiColor.green);
-    } else {
-      return AnsiText('No', foregroundColor: AnsiColor.red);
-    }
-  }
-}
-
-enum StatHeader {
-  repoName('Repository'),
-  branch('Branch'),
-  backupRepo('Backup'),
-  originRepo('Origin'),
-  upstreamRepo('Upstream'),
-  ;
-
-  const StatHeader(this.desc);
-
-  final String desc;
 }
