@@ -35,12 +35,12 @@ abstract class TableBuilder<T extends TableHeaderEnum> {
   }
 
   AnsiText _addNonGit(T header, String name) {
-    if (header == _table.keys.first) {
+    if (header.desc == _table.keys.first) {
       return AnsiText(name);
     }
-    if (header == _table.keys.skip(1).first) {
+    if (header.desc == _table.keys.skip(1).first) {
       return AnsiText(
-        'Not Git',
+        'No Git Repo',
         foregroundColor: AnsiColor.red,
       );
     }
