@@ -14,19 +14,17 @@ class GitRepo extends DirStat {
   @override
   String get name => path.basename(root.path);
 
-  List<String>? _remotes;
+  Future<List<String>> get remoteNames => runGitCmd(
+        ['remote'],
+        runAlways: true,
+        cache: true,
+      );
 
-  Future<List<String>> get remoteNames async {
-    _remotes ??= await runGitCmd(['remote']);
-    return _remotes!;
-  }
-
-  Future<String> get branch async {
-    return (await runGitCmd(
-      ['symbolic-ref', '--short', 'HEAD'],
-    ))
-        .single;
-  }
+  Future<String> get branch => runGitCmdSingle(
+        ['symbolic-ref', '--short', 'HEAD'],
+        runAlways: true,
+        cache: true,
+      );
 
   Future<GitRemote?> get origin => getRemoteInfo('origin');
 
@@ -42,13 +40,62 @@ class GitRepo extends DirStat {
     return GitRemote(name: remoteName, branch: 'TODO');
   }
 
-  Future<List<String>> runGitCmd(List<String> command) => DirStat.runGitCmd(
+  // TODO: Move main git commands to separate object?
+
+  final _cache = <String, List<String>>{};
+
+  Future<List<String>> runGitCmd(
+    List<String> command, {
+    bool runAlways = false,
+    String? promptCommandName,
+    bool cache = false,
+  }) async {
+    final subcmd = command.join(' ');
+    if (cache) {
+      final cacheVal = _cache[subcmd];
+      if (cacheVal != null) return cacheVal;
+    }
+    if (mode == CommandMode.printCommands) {
+      print('git $subcmd');
+    }
+    promptCommandName ??= command.first;
+    bool execute = runAlways || mode.execute;
+    if (!runAlways || mode.confirm) {
+      try {
+        execute = Confirm(
+          prompt: 'Run $promptCommandName on $name?',
+          defaultValue: true, // this is optional
+          waitForNewLine: true, // optional and will be false by default
+        ).interact();
+      } catch (e) {
+        // Interrupting interact prompt could mess up console
+        reset();
+        rethrow;
+      }
+    }
+    if (execute) {
+      final result = DirStat.runGitCmd(
         command,
         workingDirectory: root.path,
       );
+      if (cache) _cache[subcmd] = await result;
+      return result;
+    }
+    return Future.value(['Dry-run']);
+  }
 
-  Future<String> runGitCmdSingle(List<String> command) =>
-      runGitCmd(command).then(
+  Future<String> runGitCmdSingle(
+    List<String> command, {
+    bool runAlways = false,
+    String? promptCommandName,
+    bool cache = false,
+  }) =>
+      runGitCmd(
+        command,
+        runAlways: runAlways,
+        promptCommandName: promptCommandName,
+        cache: cache,
+      ).then(
         (value) => value.single.trim(),
       );
 }
