@@ -1,4 +1,4 @@
-import 'package:stat_git_workspaces/src/git_remote.dart';
+import 'package:stat_git_workspaces/src/core/git_remote.dart';
 
 sealed class DirStat {
   DirStat({required this.name});

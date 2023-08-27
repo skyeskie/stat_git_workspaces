@@ -1,8 +1,8 @@
 import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/stat_git_workspaces.dart';
 
-void main(List<String> arguments) {
+Future<int> main(List<String> arguments) async {
   AnsiX.allowPrint = true;
   AnsiX.ensureSupportsAnsi();
-  statOnWorkdir();
+  return statOnWorkdir(arguments);
 }

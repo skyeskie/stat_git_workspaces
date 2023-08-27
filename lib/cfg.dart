@@ -9,6 +9,9 @@ abstract class Config {
   /// Assumes each folder is a project
   Directory getWorkspaceDir();
 
+  /// Name of binary/command (for help)
+  String get commandName => 'git-ws';
+
   /// User for backup git repo
   /// TODO: Differentiate since each remote could have different users
   String get user;

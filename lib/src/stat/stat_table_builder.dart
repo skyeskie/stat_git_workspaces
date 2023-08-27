@@ -1,7 +1,7 @@
 import 'package:ansix/ansix.dart';
-import 'package:stat_git_workspaces/src/git_remote.dart';
+import 'package:stat_git_workspaces/src/core/git_remote.dart';
 
-import 'repo_info.dart';
+import '../core/repo_info.dart';
 
 class StatTableBuilder {
   static final blank = AnsiText(

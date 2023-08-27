@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
-import 'package:stat_git_workspaces/src/repo_info.dart';
 
 import 'git_remote.dart';
+import 'repo_info.dart';
 
 class GitRepo {
   GitRepo({required this.root});
