@@ -313,6 +313,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.4"
+  repository_url:
+    dependency: "direct main"
+    description:
+      name: repository_url
+      sha256: d91764c20ada294156a2c780ecd5a988633930215e79b296f84391a71dea8c83
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.1"
   rxdart:
     dependency: transitive
     description:

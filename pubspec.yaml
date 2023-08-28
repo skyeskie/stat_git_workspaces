@@ -12,6 +12,7 @@ dependencies:
   args: ^2.4.2
   cli_completion: ^0.3.0
   interact: ^2.2.0
+  repository_url: ^1.1.1
   path: ^1.8.3
 
 dev_dependencies:

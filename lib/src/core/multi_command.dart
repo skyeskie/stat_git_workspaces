@@ -67,7 +67,7 @@ abstract class MultiCommand extends Command<int> {
     for (final project in projects) {
       if (await DirStat.checkIfGitDir(project.path)) {
         await processGitRepo(
-          GitRepo(root: project, args: argResults!),
+          GitRepo(root: project, args: argResults!, globalArgs: globalResults),
           mode,
         );
       } else {
@@ -75,6 +75,7 @@ abstract class MultiCommand extends Command<int> {
           NonGitRepo(
             name: DirStat.getNameFromDir(project),
             args: argResults!,
+            globalArgs: globalResults,
           ),
           mode,
         );
