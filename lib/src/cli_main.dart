@@ -1,6 +1,7 @@
 import 'package:args/args.dart';
 import 'package:cli_completion/cli_completion.dart';
 import 'package:stat_git_workspaces/cfg.dart';
+import 'package:stat_git_workspaces/src/backup/backup_cmd.dart';
 import 'package:stat_git_workspaces/src/stat/stat_command.dart';
 
 class CliMain extends CompletionCommandRunner<int> {
@@ -21,6 +22,10 @@ class CliMain extends CompletionCommandRunner<int> {
       aliases: ['upstream'],
       defaultsTo: cfg.upstreamRemoteName,
     );
+    argParser.addFlag('verbose', abbr: 'v', help: 'Show debug output');
+
+    addCommand(StatCommand());
+    addCommand(BackupCmd());
   }
 
   @override
