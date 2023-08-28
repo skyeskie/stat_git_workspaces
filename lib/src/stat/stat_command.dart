@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:ansix/ansix.dart';
 
 import '../core/multi_command.dart';
-import 'stat_table_builder.dart';
+import 'remote_table_builder.dart';
 
 class StatCommand extends MultiCommand {
   StatCommand() : super(addBatchOption: false);
 
-  final builder = StatTableBuilder();
+  final builder = RemoteTableBuilder();
 
   @override
   String get description => 'Show information of all workspaces';

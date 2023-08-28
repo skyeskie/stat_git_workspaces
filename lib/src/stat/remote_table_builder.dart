@@ -4,7 +4,7 @@ import 'package:stat_git_workspaces/src/core/table_builder.dart';
 
 import '../core/dir_stat.dart';
 
-enum StatHeader implements TableHeaderEnum {
+enum RemoteHeader implements TableHeaderEnum {
   repoName('Repository'),
   branch('Branch'),
   backupRepo('Backup'),
@@ -13,21 +13,30 @@ enum StatHeader implements TableHeaderEnum {
   // otherRemotes('Remotes'),
   ;
 
-  const StatHeader(this.desc);
+  const RemoteHeader(this.desc);
 
   @override
   final String desc;
 }
 
-class StatTableBuilder extends TableBuilder<StatHeader> {
-  @override
-  List<StatHeader> get enumCols => StatHeader.values;
+typedef RemoteFormatCallback = AnsiText Function(
+  GitRemote? remote, {
+  AnsiColor noRemoteColoring,
+});
+
+class RemoteTableBuilder extends TableBuilder<RemoteHeader> {
+  RemoteTableBuilder({this.formatRemote = formatRemoteStatus});
 
   @override
-  Future<AnsiText> addGitRow(StatHeader header, GitRepo gitRepo) async =>
+  List<RemoteHeader> get enumCols => RemoteHeader.values;
+
+  final RemoteFormatCallback formatRemote;
+
+  @override
+  Future<AnsiText> addGitRow(RemoteHeader header, GitRepo gitRepo) async =>
       switch (header) {
-        StatHeader.repoName => AnsiText(gitRepo.name),
-        StatHeader.branch => AnsiText(await gitRepo.branch,
+        RemoteHeader.repoName => AnsiText(gitRepo.name),
+        RemoteHeader.branch => AnsiText(await gitRepo.branch,
             foregroundColor: switch (await gitRepo.branch) {
               'mainline' => AnsiColor.greenYellow,
               'master' => AnsiColor.orange1,
@@ -35,9 +44,9 @@ class StatTableBuilder extends TableBuilder<StatHeader> {
               'dev' => AnsiColor.green,
               _ => AnsiColor.cyan2,
             }),
-        StatHeader.backupRepo => formatRemote(await gitRepo.backup),
-        StatHeader.originRepo => formatRemote(await gitRepo.origin),
-        StatHeader.upstreamRepo => formatRemote(
+        RemoteHeader.backupRepo => formatRemote(await gitRepo.backup),
+        RemoteHeader.originRepo => formatRemote(await gitRepo.origin),
+        RemoteHeader.upstreamRepo => formatRemote(
             await gitRepo.upstream,
             noRemoteColoring: AnsiColor.grey,
           ),
@@ -50,7 +59,7 @@ class StatTableBuilder extends TableBuilder<StatHeader> {
         //   ).replaceEmptyWith(blank),
       };
 
-  static AnsiText formatRemote(
+  static AnsiText formatRemoteStatus(
     GitRemote? remote, {
     AnsiColor noRemoteColoring = AnsiColor.red,
   }) {
