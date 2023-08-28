@@ -24,7 +24,7 @@ typedef RemoteFormatCallback = AnsiText Function(
   AnsiColor noRemoteColoring,
 });
 
-class RemoteTableBuilder extends TableBuilder<RemoteHeader> {
+class RemoteTableBuilder extends TableBuilder<RemoteHeader, void> {
   RemoteTableBuilder({this.formatRemote = formatRemoteStatus});
 
   @override
@@ -32,8 +32,14 @@ class RemoteTableBuilder extends TableBuilder<RemoteHeader> {
 
   final RemoteFormatCallback formatRemote;
 
+  static const AnsiColor defaultNoRemoteColoring = AnsiColor.red;
+
   @override
-  Future<AnsiText> addGitRow(RemoteHeader header, GitRepo gitRepo) async =>
+  Future<AnsiText> addGitRow({
+    required RemoteHeader header,
+    required GitRepo gitRepo,
+    void results,
+  }) async =>
       switch (header) {
         RemoteHeader.repoName => AnsiText(gitRepo.name),
         RemoteHeader.branch => AnsiText(await gitRepo.branch,
@@ -61,15 +67,9 @@ class RemoteTableBuilder extends TableBuilder<RemoteHeader> {
 
   static AnsiText formatRemoteStatus(
     GitRemote? remote, {
-    AnsiColor noRemoteColoring = AnsiColor.red,
+    AnsiColor noRemoteColoring = defaultNoRemoteColoring,
   }) {
-    if (remote == null) {
-      return AnsiText(
-        'x',
-        foregroundColor: noRemoteColoring,
-        alignment: AnsiTextAlignment.center,
-      );
-    }
+    if (remote == null) return getNoRemoteText(color: noRemoteColoring);
 
     if (remote.isSync) {
       return AnsiText(
@@ -85,6 +85,16 @@ class RemoteTableBuilder extends TableBuilder<RemoteHeader> {
       alignment: AnsiTextAlignment.center,
     );
   }
+
+  static AnsiText getNoRemoteText({
+    String text = 'x',
+    AnsiColor color = defaultNoRemoteColoring,
+  }) =>
+      AnsiText(
+        text,
+        foregroundColor: color,
+        alignment: AnsiTextAlignment.center,
+      );
 }
 
 extension BlankReplace on AnsiText {

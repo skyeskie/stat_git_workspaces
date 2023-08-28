@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/src/core/dir_stat.dart';
 
-abstract class TableBuilder<T extends TableHeaderEnum> {
+abstract class TableBuilder<T extends TableHeaderEnum, R> {
   List<T> get enumCols;
 
   final blank = AnsiText(
@@ -24,13 +24,17 @@ abstract class TableBuilder<T extends TableHeaderEnum> {
     _table[header.desc]!.add(value);
   }
 
-  Future<void> add(DirStat repo) async {
+  Future<void> add(DirStat repo, [R? results]) async {
     for (final header in enumCols) {
       _addField(
         header,
         switch (repo) {
           (NonGitRepo dir) => _addNonGit(header, dir.name),
-          (GitRepo gitRepo) => await addGitRow(header, gitRepo),
+          (GitRepo gitRepo) => await addGitRow(
+              header: header,
+              gitRepo: gitRepo,
+              results: results,
+            ),
         },
       );
     }
@@ -49,7 +53,11 @@ abstract class TableBuilder<T extends TableHeaderEnum> {
     return blank;
   }
 
-  FutureOr<AnsiText> addGitRow(T header, GitRepo gitRepo);
+  FutureOr<AnsiText> addGitRow({
+    required T header,
+    required GitRepo gitRepo,
+    R? results,
+  });
 
   AnsiTable build() => AnsiTable.fromMap(
         _table,
