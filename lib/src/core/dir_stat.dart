@@ -42,6 +42,7 @@ sealed class DirStat {
   static Future<List<String>> runGitCmd(
     List<String> command, {
     required String workingDirectory,
+    bool includeStdErr = false,
   }) async {
     final cmd = await Process.start(
       'git',
@@ -51,20 +52,22 @@ sealed class DirStat {
 
     final exitCode = await cmd.exitCode;
 
+    var error = '';
     if (exitCode != 0) {
-      final error = await cmd.stderr
+      error = await cmd.stderr
           .transform(
             const SystemEncoding().decoder,
           )
           .join();
-      return Future.error(error);
+      if (!includeStdErr) return Future.error(error);
     }
 
-    final result = await cmd.stdout
+    var result = await cmd.stdout
         .transform(
           const SystemEncoding().decoder,
         )
         .join();
+    if (includeStdErr && exitCode != 0) result += '\n$error';
     return result.trim().split('\n');
   }
 

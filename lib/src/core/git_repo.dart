@@ -75,6 +75,7 @@ class GitRepo extends DirStat {
     bool runAlways = false,
     String? promptCommandName,
     bool cache = false,
+    bool includeStdErr = false,
   }) async {
     final subcmd = command.join(' ');
     if (cache) {
@@ -103,6 +104,7 @@ class GitRepo extends DirStat {
       final result = DirStat.runGitCmd(
         command,
         workingDirectory: root.path,
+        includeStdErr: includeStdErr,
       );
       if (cache) _cache[subcmd] = await result;
       return result;
