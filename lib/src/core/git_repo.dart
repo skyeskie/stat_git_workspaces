@@ -31,7 +31,6 @@ class GitRepo extends DirStat {
               final match = matches.single;
               if (match.groupCount != 3) return null;
               if (match.group(3) == 'push') return null;
-              print("${match.group(1)} | ${match.group(2)}");
               return (match.group(1), match.group(2));
             })
             .whereType<(String, String)>()

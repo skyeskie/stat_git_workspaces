@@ -17,10 +17,10 @@ enum StatusHeaders implements TableHeaderEnum {
 class StatusResult {
   const StatusResult({this.description = '?', this.color = AnsiColor.cyan1});
 
-  const StatusResult.success({this.description = '✔️'})
+  const StatusResult.success([this.description = '✔️'])
       : color = AnsiColor.green;
 
-  const StatusResult.error({this.description = 'X'}) : color = AnsiColor.red;
+  const StatusResult.error([this.description = 'X']) : color = AnsiColor.red;
 
   final String description;
   final AnsiColor color;
