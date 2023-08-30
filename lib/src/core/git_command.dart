@@ -84,7 +84,6 @@ class GitCommand {
   Future<String> get stderr => _stderr.future;
 
   Future<List<String>> get results async {
-    print('Getting results');
     return stdout.then(_splitToLines);
   }
 

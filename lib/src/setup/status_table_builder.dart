@@ -25,7 +25,11 @@ class StatusResult {
   final String description;
   final AnsiColor color;
 
-  AnsiText asAnsiText() => AnsiText(description, foregroundColor: color);
+  AnsiText asAnsiText() => AnsiText(
+        description,
+        foregroundColor: color,
+        alignment: AnsiTextAlignment.center,
+      );
 }
 
 class StatusTableBuilder extends TableBuilder<StatusHeaders, StatusResult> {

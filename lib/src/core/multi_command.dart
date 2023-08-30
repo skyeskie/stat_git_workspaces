@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:args/command_runner.dart';
+import 'package:interact/interact.dart';
+import 'package:path/path.dart';
 import 'package:stat_git_workspaces/src/core/dir_stat.dart';
 
 import '../../cfg.dart';
@@ -64,7 +67,21 @@ abstract class MultiCommand extends Command<int> {
 
     final mode = determineCommandMode();
 
+    final dirs = projects.map((e) => basename(e.path)).toList(growable: false);
+    final dirPad = dirs.map((e) => e.length).reduce(max);
+    final numProjects = projects.length;
+
+    final progress = Progress(
+      length: numProjects,
+      size: 0.5,
+      leftPrompt: (i) => i == projects.length
+          ? 'Finishing'
+          : 'Pushing ${dirs[i].padRight(dirPad)}: ',
+      rightPrompt: (i) => '${i.toString().padLeft(3)} / $numProjects',
+    ).interact();
+
     for (final project in projects) {
+      progress.increase(1);
       if (await DirStat.checkIfGitDir(project.path)) {
         await processGitRepo(
           GitRepo(
@@ -86,6 +103,8 @@ abstract class MultiCommand extends Command<int> {
         );
       }
     }
+
+    progress.done();
 
     return afterProcess(mode);
   }
