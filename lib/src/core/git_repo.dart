@@ -95,19 +95,4 @@ class GitRepo extends DirStat {
     if (cache) _cache[subcmd] = cmd;
     return cmd;
   }
-
-  Future<String> runGitCmdSingle(
-    List<String> command, {
-    bool runAlways = false,
-    String? promptCommandName,
-    bool cache = false,
-  }) =>
-      runGitCmd(
-        command,
-        runAlways: runAlways,
-        promptCommandName: promptCommandName,
-        cache: cache,
-      ).then(
-        (value) => value.single.trim(),
-      );
 }

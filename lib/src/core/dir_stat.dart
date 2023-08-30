@@ -48,8 +48,6 @@ sealed class DirStat {
     final result = await cmd.run();
 
     if (result) {
-      print('Git top lvl: ${await cmd.stdout}');
-      print('Working dir: $workingDirectory');
       return path.equals(
         await cmd.stdout,
         workingDirectory,
