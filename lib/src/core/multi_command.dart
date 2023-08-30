@@ -71,6 +71,7 @@ abstract class MultiCommand extends Command<int> {
             root: project,
             args: argResults!,
             globalArgs: globalResults,
+            mode: mode,
           ),
           mode,
         );

@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:interact/interact.dart';
 import 'package:path/path.dart' as path;
 import 'package:repository_url/repository_url.dart';
+import 'package:stat_git_workspaces/src/core/git_command.dart';
 
 import 'git_remote.dart';
 import 'multi_command.dart';
@@ -39,51 +39,28 @@ sealed class DirStat {
 
   static String getNameFromDir(Directory dir) => path.basename(dir.path);
 
-  static Future<List<String>> runGitCmd(
-    List<String> command, {
-    required String workingDirectory,
-    bool includeStdErr = false,
-  }) async {
-    final cmd = await Process.start(
-      'git',
-      command,
-      workingDirectory: workingDirectory,
-    );
-
-    final exitCode = await cmd.exitCode;
-
-    var error = '';
-    if (exitCode != 0) {
-      error = await cmd.stderr
-          .transform(
-            const SystemEncoding().decoder,
-          )
-          .join();
-      if (!includeStdErr) return Future.error(error);
-    }
-
-    var result = await cmd.stdout
-        .transform(
-          const SystemEncoding().decoder,
-        )
-        .join();
-    if (includeStdErr && exitCode != 0) result += '\n$error';
-    return result.trim().split('\n');
-  }
-
   static Future<bool> checkIfGitDir(String workingDirectory) async {
-    return runGitCmd(
+    final cmd = GitCommand(
       ['rev-parse', '--show-toplevel'],
       workingDirectory: workingDirectory,
-    ).then(
-      (topLevel) => path.equals(
-        topLevel.single.trim(),
-        workingDirectory,
-      ),
-      onError: (error) => error.toString().contains('not a git repository')
-          ? false
-          : Future.error(error),
     );
+
+    final result = await cmd.run();
+
+    if (result) {
+      print('Git top lvl: ${await cmd.stdout}');
+      print('Working dir: $workingDirectory');
+      return path.equals(
+        await cmd.stdout,
+        workingDirectory,
+      );
+    }
+
+    final errorMsg = await cmd.stderr;
+
+    if (errorMsg.contains('not a git repository')) return false;
+
+    return Future.error(errorMsg);
   }
 }
 

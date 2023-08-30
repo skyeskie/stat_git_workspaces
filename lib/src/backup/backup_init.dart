@@ -58,21 +58,24 @@ class BackupInit extends MultiCommand {
     final backupRemoteName =
         globalResults?['backup-remote-name'] ?? config.backupRemoteName;
 
-    return repo.runGitCmd([
+    final cmd = repo.runGitCmd([
       'remote',
       'add',
       backupRemoteName,
       url.toString(),
-    ]).then(
-      (_) => builder.add(
+    ]);
+
+    if (await cmd.run()) {
+      builder.add(
         repo,
         StatusResult.success('Added: $backupRemoteName:$org'),
-      ),
-      onError: (error) => builder.add(
+      );
+    } else {
+      builder.add(
         repo,
-        StatusResult.error('Failed: $error'),
-      ),
-    );
+        StatusResult.error(await cmd.stderr),
+      );
+    }
   }
 
   @override

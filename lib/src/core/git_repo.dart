@@ -23,25 +23,27 @@ class GitRepo extends DirStat {
         ['remote', '-v'],
         runAlways: true,
         cache: true,
-      ).then(
-        (remotes) => remotes
-            .map((remote) {
-              final matches = remoteParse.allMatches(remote);
-              if (matches.length != 1) return null;
-              final match = matches.single;
-              if (match.groupCount != 3) return null;
-              if (match.group(3) == 'push') return null;
-              return (match.group(1), match.group(2));
-            })
-            .whereType<(String, String)>()
-            .toList(),
-      );
+      ).results.then(
+            (remotes) => remotes
+                .map((remote) {
+                  final matches = remoteParse.allMatches(remote);
+                  if (matches.length != 1) return null;
+                  final match = matches.single;
+                  if (match.groupCount != 3) return null;
+                  if (match.group(3) == 'push') return null;
+                  return (match.group(1), match.group(2));
+                })
+                .whereType<(String, String)>()
+                .toList(),
+          );
 
-  Future<String> get branch => runGitCmdSingle(
+  Future<String> get branch => runGitCmd(
         ['symbolic-ref', '--short', 'HEAD'],
         runAlways: true,
         cache: true,
-      );
+      ).stdout.then(
+            (output) => output.trim(),
+          );
 
   Future<GitRemote?> get origin => getRemoteInfo(getArg('origin-remote-name'));
 
@@ -67,48 +69,31 @@ class GitRepo extends DirStat {
 
   // TODO: Move main git commands to separate object?
 
-  final _cache = <String, List<String>>{};
+  final _cache = <String, GitCommand>{};
 
-  Future<List<String>> runGitCmd(
+  GitCommand runGitCmd(
     List<String> command, {
     bool runAlways = false,
     String? promptCommandName,
     bool cache = false,
     bool includeStdErr = false,
-  }) async {
+  }) {
     final subcmd = command.join(' ');
     if (cache) {
       final cacheVal = _cache[subcmd];
       if (cacheVal != null) return cacheVal;
     }
-    if (mode == CommandMode.printCommands) {
-      print('git $subcmd');
-    }
-    promptCommandName ??= command.first;
-    bool execute = runAlways || mode.execute;
-    if (!runAlways || mode.confirm) {
-      try {
-        execute = Confirm(
-          prompt: 'Run $promptCommandName on $name?',
-          defaultValue: true, // this is optional
-          waitForNewLine: true, // optional and will be false by default
-        ).interact();
-      } catch (e) {
-        // Interrupting interact prompt could mess up console
-        reset();
-        rethrow;
-      }
-    }
-    if (execute) {
-      final result = DirStat.runGitCmd(
-        command,
-        workingDirectory: root.path,
-        includeStdErr: includeStdErr,
-      );
-      if (cache) _cache[subcmd] = await result;
-      return result;
-    }
-    return Future.value(['Dry-run']);
+
+    final cmd = GitCommand(
+      command,
+      workingDirectory: root.path,
+      promptCommandName: promptCommandName,
+      mode: mode,
+      runAlways: runAlways,
+      repoName: name,
+    );
+    if (cache) _cache[subcmd] = cmd;
+    return cmd;
   }
 
   Future<String> runGitCmdSingle(
