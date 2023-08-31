@@ -13,7 +13,10 @@ RepositoryUrl makeSshRepositoryUrl({
     );
 
 extension RepoUserExtensions on RepositoryUrl {
-  String get user => pathSegment.first;
+  String get user {
+    // Use not empty, because `user@host:/user/repo` is valid
+    return pathSegment.firstWhere((element) => element.isNotEmpty);
+  }
 
   String get organization => user;
 }
