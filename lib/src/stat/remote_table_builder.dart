@@ -1,6 +1,7 @@
 import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/src/core/git_remote.dart';
 import 'package:stat_git_workspaces/src/core/table_builder.dart';
+import 'package:stat_git_workspaces/src/util/repository_url.dart';
 
 import '../core/dir_stat.dart';
 
@@ -71,18 +72,30 @@ class RemoteTableBuilder extends TableBuilder<RemoteHeader, void> {
   }) {
     if (remote == null) return getNoRemoteText(color: noRemoteColoring);
 
-    if (remote.isSync) {
+    if (remote.isError) {
       return AnsiText(
-        remote.name,
-        foregroundColor: AnsiColor.green,
-        alignment: AnsiTextAlignment.center,
+        remote.error ?? 'Unknown error',
+        foregroundColor: AnsiColor.red,
+        // alignment: AnsiTextAlignment.center,
       );
     }
 
+    final remoteDisplay = [remote.uri.organization, remote.branch].join(':');
+
     return AnsiText(
-      '${remote.behind} | ${remote.ahead}',
-      foregroundColor: AnsiColor.orange1,
-      alignment: AnsiTextAlignment.center,
+      [
+        remoteDisplay,
+        if (remote.behind > 0) ' ⇣${remote.behind}',
+        if (remote.ahead > 0) ' ⇡${remote.ahead}',
+      ].join(),
+      foregroundColor: switch ((remote.behind, remote.ahead)) {
+        (== 0, == 0) => AnsiColor.green,
+        (> 0, > 0) => AnsiColor.orangeRed1,
+        (> 0, _) => AnsiColor.yellow,
+        (_, > 0) => AnsiColor.cyan1,
+        _ => AnsiColor.red2,
+      },
+      // alignment: AnsiTextAlignment.center,
     );
   }
 
