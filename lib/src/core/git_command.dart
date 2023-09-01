@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:interact/interact.dart';
 import 'package:path/path.dart' as path;
+import 'package:stat_git_workspaces/src/util/cli_printer.dart';
 
 import 'multi_command.dart';
 
@@ -33,11 +34,11 @@ class GitCommand {
       }
 
       try {
-        execute = Confirm(
+        execute = CliPrinter.I.confirm(Confirm(
           prompt: 'Run $promptCommandName on $repoName?',
           defaultValue: true, // this is optional
           waitForNewLine: true, // optional and will be false by default
-        ).interact();
+        ));
       } catch (e) {
         // Interrupting interact prompt could mess up console
         reset();
