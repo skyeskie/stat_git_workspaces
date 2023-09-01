@@ -2,6 +2,7 @@ import 'package:args/args.dart';
 import 'package:cli_completion/cli_completion.dart';
 import 'package:stat_git_workspaces/cfg.dart';
 import 'package:stat_git_workspaces/src/backup/backup_cmd.dart';
+import 'package:stat_git_workspaces/src/remote/git_fetch.dart';
 import 'package:stat_git_workspaces/src/stat/stat_command.dart';
 
 class CliMain extends CompletionCommandRunner<int> {
@@ -26,6 +27,7 @@ class CliMain extends CompletionCommandRunner<int> {
 
     addCommand(StatCommand());
     addCommand(BackupCmd());
+    addCommand(GitFetch());
   }
 
   @override
