@@ -1,14 +1,18 @@
 import 'dart:async';
 
 import 'package:ansix/ansix.dart';
+import 'package:stat_git_workspaces/src/util/repository_url.dart';
 
+import '../core/git_remote.dart';
 import '../core/multi_command.dart';
 import 'remote_table_builder.dart';
 
 class StatCommand extends MultiCommand {
   StatCommand() : super(addBatchOption: false);
 
-  final builder = RemoteTableBuilder();
+  final builder = RemoteTableBuilder(
+    formatRemote: formatRemoteStatus,
+  );
 
   @override
   String get description => 'Show information of all workspaces';
@@ -17,6 +21,37 @@ class StatCommand extends MultiCommand {
   String get name => command;
 
   static const String command = 'stat';
+
+  static AnsiText formatRemoteStatus(
+    GitRemote? remote,
+    void results, {
+    AnsiColor noRemoteColoring = RemoteTableBuilder.defaultNoRemoteColoring,
+  }) {
+    final errorOut = RemoteTableBuilder.formatRemoteErrorConditions(
+      remote,
+      noRemoteColoring: noRemoteColoring,
+    );
+    if (errorOut != null) return errorOut;
+    assert(remote != null); //Handled in errorOut
+
+    final remoteDisplay = [remote!.uri.organization, remote.branch].join(':');
+
+    return AnsiText(
+      [
+        remoteDisplay,
+        if (remote.behind > 0) ' ⇣${remote.behind}',
+        if (remote.ahead > 0) ' ⇡${remote.ahead}',
+      ].join(),
+      foregroundColor: switch ((remote.behind, remote.ahead)) {
+        (== 0, == 0) => AnsiColor.green,
+        (> 0, > 0) => AnsiColor.orangeRed1,
+        (> 0, _) => AnsiColor.yellow,
+        (_, > 0) => AnsiColor.cyan1,
+        _ => AnsiColor.red2,
+      },
+      // alignment: AnsiTextAlignment.center,
+    );
+  }
 
   @override
   Future<void> processGitRepo(repo, mode) => builder.add(repo);

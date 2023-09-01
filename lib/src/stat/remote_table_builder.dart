@@ -1,7 +1,6 @@
 import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/src/core/git_remote.dart';
 import 'package:stat_git_workspaces/src/core/table_builder.dart';
-import 'package:stat_git_workspaces/src/util/repository_url.dart';
 
 import '../core/dir_stat.dart';
 
@@ -20,18 +19,19 @@ enum RemoteHeader implements TableHeaderEnum {
   final String desc;
 }
 
-typedef RemoteFormatCallback = AnsiText Function(
-  GitRemote? remote, {
+typedef RemoteFormatCallback<T> = AnsiText Function(
+  GitRemote? remote,
+  T? results, {
   AnsiColor noRemoteColoring,
 });
 
-class RemoteTableBuilder extends TableBuilder<RemoteHeader, void> {
+class RemoteTableBuilder<T> extends TableBuilder<RemoteHeader, T> {
   RemoteTableBuilder({this.formatRemote = formatRemoteStatus});
 
   @override
   List<RemoteHeader> get enumCols => RemoteHeader.values;
 
-  final RemoteFormatCallback formatRemote;
+  final RemoteFormatCallback<T> formatRemote;
 
   static const AnsiColor defaultNoRemoteColoring = AnsiColor.red;
 
@@ -39,7 +39,7 @@ class RemoteTableBuilder extends TableBuilder<RemoteHeader, void> {
   Future<AnsiText> addGitRow({
     required RemoteHeader header,
     required GitRepo gitRepo,
-    void results,
+    T? results,
   }) async =>
       switch (header) {
         RemoteHeader.repoName => AnsiText(gitRepo.name),
@@ -51,24 +51,37 @@ class RemoteTableBuilder extends TableBuilder<RemoteHeader, void> {
               'dev' => AnsiColor.green,
               _ => AnsiColor.cyan2,
             }),
-        RemoteHeader.backupRepo => formatRemote(await gitRepo.backup),
-        RemoteHeader.originRepo => formatRemote(await gitRepo.origin),
+        RemoteHeader.backupRepo => formatRemote(await gitRepo.backup, results),
+        RemoteHeader.originRepo => formatRemote(await gitRepo.origin, results),
         RemoteHeader.upstreamRepo => formatRemote(
             await gitRepo.upstream,
+            results,
             noRemoteColoring: AnsiColor.grey,
           ),
-        // StatHeader.otherRemotes => AnsiText(
-        //     (await gitRepo.remoteNames)
-        //         .where(
-        //           (element) => !['origin', 'nas', 'upstream'].contains(element),
-        //         )
-        //         .join(', '),
-        //   ).replaceEmptyWith(blank),
       };
 
   static AnsiText formatRemoteStatus(
+    GitRemote? remote,
+    void results, {
+    AnsiColor noRemoteColoring = defaultNoRemoteColoring,
+  }) {
+    final errorOut = formatRemoteErrorConditions(
+      remote,
+      noRemoteColoring: noRemoteColoring,
+    );
+    if (errorOut != null) return errorOut;
+    assert(remote != null); //Handled in errorOut
+
+    return AnsiText(
+      remote!.name,
+      foregroundColor: AnsiColor.green,
+    );
+  }
+
+  static AnsiText? formatRemoteErrorConditions(
     GitRemote? remote, {
     AnsiColor noRemoteColoring = defaultNoRemoteColoring,
+    bool alignCenter = false,
   }) {
     if (remote == null) return getNoRemoteText(color: noRemoteColoring);
 
@@ -76,27 +89,12 @@ class RemoteTableBuilder extends TableBuilder<RemoteHeader, void> {
       return AnsiText(
         remote.error ?? 'Unknown error',
         foregroundColor: AnsiColor.red,
-        // alignment: AnsiTextAlignment.center,
+        alignment:
+            alignCenter ? AnsiTextAlignment.center : AnsiTextAlignment.left,
       );
     }
 
-    final remoteDisplay = [remote.uri.organization, remote.branch].join(':');
-
-    return AnsiText(
-      [
-        remoteDisplay,
-        if (remote.behind > 0) ' ⇣${remote.behind}',
-        if (remote.ahead > 0) ' ⇡${remote.ahead}',
-      ].join(),
-      foregroundColor: switch ((remote.behind, remote.ahead)) {
-        (== 0, == 0) => AnsiColor.green,
-        (> 0, > 0) => AnsiColor.orangeRed1,
-        (> 0, _) => AnsiColor.yellow,
-        (_, > 0) => AnsiColor.cyan1,
-        _ => AnsiColor.red2,
-      },
-      // alignment: AnsiTextAlignment.center,
-    );
+    return null;
   }
 
   static AnsiText getNoRemoteText({
