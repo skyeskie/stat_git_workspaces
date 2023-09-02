@@ -85,7 +85,7 @@ class GitRepo extends DirStat {
         behind: behind,
       );
     } catch (error) {
-      // print(error.toString().withForegroundColor(AnsiColor.red));
+      // print(error.toString().cliError());
       return GitRemote.error(
         error: error.toString(),
         name: name,

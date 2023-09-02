@@ -54,47 +54,20 @@ class GitFetch extends MultiCommand {
   Future<void> processGitRepo(GitRepo repo, CommandMode mode) async {
     // CliPrinter.debug('process repo: ${repo.name}');
     final remoteConfigs = await repo.remoteNames;
-    var cmd = ['fetch', '--verbose', '--porcelain'];
     // Default is to use [origin, backup, upstream] repositories
     final remotesResults = <String, List<String>>{
       globalResults!['backup-remote-name']: [],
       globalResults!['origin-remote-name']: [],
       globalResults!['upstream-remote-name']: [],
     };
-    if (argResults!['all']) {
-      cmd.add('--all');
-    } else {
-      cmd.add('--multiple');
-      final remotesToCheck = Set.of(
-        remotesResults.keys,
-      ).intersection(
-        remoteConfigs.map((e) => e.$1).toSet(),
-      );
-      cmd.addAll(remotesToCheck);
-    }
-    // CliPrinter.debug('> git ${cmd.join(" ")}');
-    final results = repo.runGitCmd(cmd, promptCommandName: 'fetch');
-
-    for (final line in await results.results) {
-      if (line.isEmpty) continue;
-      final branchResult = RemoteBranchFetchResult.parse(line);
-      remotesResults[branchResult.remoteName]?.add(
-        branchResult.status.colorDisplay,
-      );
-      // CliPrinter.info(await results.stdout);
+    Set<String> remotesToCheck = Set.of(remoteConfigs.map((e) => e.$1));
+    if (!argResults!['all']) {
+      final mainRemotes = remotesResults.keys.toSet();
+      remotesToCheck.removeWhere((element) => !mainRemotes.contains(element));
     }
 
-    if (!(await results.run())) {
-      final error = (await results.stderr).split('\n');
-      final shortErrorMatch = RegExp(r'^error: ');
-      for (final errorLine in error) {
-        if (shortErrorMatch.hasMatch(errorLine)) {
-          final remote = errorLine.split(' ').last;
-          remotesResults[remote]?.add(errorLine.replaceFirst('error: ', ''));
-        }
-      }
-
-      CliPrinter.error(error.join('\n'));
+    for (final remoteName in remotesToCheck) {
+      remotesResults[remoteName] = await processSingleRemote(repo, remoteName);
     }
 
     builder.add(repo, remotesResults);
@@ -102,6 +75,41 @@ class GitFetch extends MultiCommand {
     // Will run all remotes
     // scan for "error: could not fetch <name>" on error
     // Successful will be "refs/remotes/<name/*
+  }
+
+  Future<List<String>> processSingleRemote(
+    GitRepo repo,
+    String remoteName,
+  ) async {
+    var cmd = ['fetch', '--verbose', '--porcelain', remoteName];
+    await CliPrinter.debug('> git ${cmd.join(" ")}');
+    final results = repo.runGitCmd(cmd, promptCommandName: 'fetch');
+
+    final branchOutputs = <String>[];
+    for (final line in await results.results) {
+      if (line.isEmpty) continue;
+      final branchResult = RemoteBranchFetchResult.parse(line);
+      branchOutputs.add(
+        branchResult.status.colorDisplay,
+      );
+    }
+
+    if (!(await results.run())) {
+      final error = await results.stderr;
+      await CliPrinter.info(await results.stdout);
+      await CliPrinter.error(error);
+      if (error.contains('Connection refused')) {
+        return ['Connection refused'.cliError()];
+      }
+      if (error.contains('No route to host')) {
+        return ['Network error'.cliError()];
+      }
+      if (error.contains('Permission denied (publickey)')) {
+        return ['Permission denied (publickey)'.cliError()];
+      }
+    }
+
+    return branchOutputs;
   }
 
   @override

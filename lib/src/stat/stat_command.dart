@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:ansix/ansix.dart';
+import 'package:stat_git_workspaces/src/util/cli_printer.dart';
 import 'package:stat_git_workspaces/src/util/repository_url.dart';
 
 import '../core/git_remote.dart';
@@ -65,7 +66,7 @@ class StatCommand extends MultiCommand {
       builder.printToConsole();
     } else {
       AnsiX.printStyled(
-        'Does not support non-execute modes'.withForegroundColor(AnsiColor.red),
+        'Does not support non-execute modes'.cliError(),
         textStyle: const AnsiTextStyle(),
       );
       return Future.value(1);
