@@ -28,6 +28,9 @@ class BackupPush extends MultiCommand {
   String get description => 'Push changes to bakcup server';
 
   @override
+  String get describeInitAction => 'Pushing changes to backup remote';
+
+  @override
   String get name => 'push';
 
   static const statusMissing = StatusResult(

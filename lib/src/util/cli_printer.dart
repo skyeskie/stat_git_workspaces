@@ -59,20 +59,20 @@ class CliPrinter {
     _activeProgress!.increase(newValue);
   }
 
-  Future _flushErrors() async {
+  Future _flushErrors({bool reLock = true}) async {
     _clearConsoleLock();
     await stdout.flush();
     _errorLines.forEach(print);
     if (_errorLines.isNotEmpty) print('\n');
     _errorLines.clear();
     await stdout.flush();
-    _setConsoleLock();
+    if (reLock) _setConsoleLock();
     await stdout.flush();
   }
 
   Future finishProgress() async {
     if (!_consoleLock) throw StateError('Tried to clear nonexistent lock');
-    await _flushErrors();
+    await _flushErrors(reLock: false);
     _activeProgress = null;
     _progressBuilder = null;
     _progressCurrent = 0;
@@ -84,9 +84,8 @@ class CliPrinter {
     lines.forEach(printLine);
   }
 
-  Future printInfo(Object? message) => printLine(
-        message.toString().withForegroundColor(AnsiColor.lightSkyBlue1),
-      );
+  static Future _pc(Object? message, AnsiColor color) =>
+      _instance.printLine(message.toString().withForegroundColor(color));
 
   Future printLine(Object? message) async {
     if (_context == null) {
@@ -132,11 +131,14 @@ class CliPrinter {
 
   static Future error(Object? message) => _instance.printError(message);
 
-  static Future info(Object? message) => _instance.printInfo(message);
+  static Future info(Object? message) => _pc(message, AnsiColor.lightSkyBlue1);
 
-  static Future debug(Object? message) => _instance.printLine(
-        message.toString().withForegroundColor(AnsiColor.grey),
+  static Future header(Object? message) => _pc(
+        '\n$message'.bold(),
+        AnsiColor.orange1,
       );
+
+  static Future debug(Object? message) => _pc(message, AnsiColor.grey);
 }
 
 extension QuickColors on String {

@@ -20,6 +20,9 @@ class BackupInit extends MultiCommand {
   String get description => 'Create backup remote for repositories missing one';
 
   @override
+  String get describeInitAction => 'Setting up backup remote';
+
+  @override
   String get name => 'init';
 
   static const statusExisting = StatusResult(

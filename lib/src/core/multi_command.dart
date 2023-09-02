@@ -58,6 +58,8 @@ abstract class MultiCommand extends Command<int> {
 
   Future<int> afterProcess(CommandMode mode) async => 0;
 
+  String get describeInitAction;
+
   @override
   FutureOr<int>? run() async {
     final ws = Directory(argResults!['workspace']);
@@ -68,15 +70,17 @@ abstract class MultiCommand extends Command<int> {
     final mode = determineCommandMode();
 
     final dirs = projects.map((e) => basename(e.path)).toList(growable: false);
-    final dirPad = dirs.map((e) => e.length).reduce(max);
+    final dirPad = dirs.map((e) => e.length).reduce(max) + 2;
     final numProjects = projects.length;
+
+    await CliPrinter.header(describeInitAction);
 
     CliPrinter.I.setProgressBar(
       length: numProjects,
       size: 0.5,
       leftPrompt: (i) => i == projects.length
-          ? 'Finishing'
-          : 'Pushing ${dirs[i].padRight(dirPad)}: ',
+          ? '> Finishing'.padRight(dirPad)
+          : '> ${dirs[i].padRight(dirPad)}: ',
       rightPrompt: (i) => '${i.toString().padLeft(3)} / $numProjects',
     );
 
@@ -104,7 +108,7 @@ abstract class MultiCommand extends Command<int> {
       }
     }
 
-    CliPrinter.I.finishProgress();
+    await CliPrinter.I.finishProgress();
 
     return afterProcess(mode);
   }

@@ -12,6 +12,9 @@ class GitFetch extends MultiCommand {
     argParser.addFlag('all', defaultsTo: false);
   }
 
+  @override
+  String get describeInitAction => 'Fetching repositories';
+
   final builder = RemoteTableBuilder<Map<String, List<String>>>(
     formatRemote: formatRemoteFetchResults,
   );

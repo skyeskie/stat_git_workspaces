@@ -19,6 +19,9 @@ class StatCommand extends MultiCommand {
   String get description => 'Show information of all workspaces';
 
   @override
+  String get describeInitAction => 'Scanning repositories';
+
+  @override
   String get name => command;
 
   static const String command = 'stat';
