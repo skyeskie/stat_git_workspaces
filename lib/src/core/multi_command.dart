@@ -40,6 +40,19 @@ abstract class MultiCommand extends Command<int> {
     );
   }
 
+  // Override Interface
+  Future<void> processGitRepo(GitRepo repo, CommandMode mode);
+
+  Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode);
+
+  Future<int> afterProcess(CommandMode mode) async => 0;
+
+  String get describeInitAction;
+
+  // Values
+  final config = Config.get();
+
+  // Methods
   CommandMode determineCommandMode() {
     if (argResults?['dry-run']) return CommandMode.printCommands;
     bool? batchFlag = argResults?['batch'];
@@ -49,16 +62,6 @@ abstract class MultiCommand extends Command<int> {
       (null) => CommandMode.noBatchOption,
     };
   }
-
-  final config = Config.get();
-
-  Future<void> processGitRepo(GitRepo repo, CommandMode mode);
-
-  Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode);
-
-  Future<int> afterProcess(CommandMode mode) async => 0;
-
-  String get describeInitAction;
 
   @override
   FutureOr<int>? run() async {
