@@ -76,6 +76,7 @@ class CliPrinter {
     _activeProgress = null;
     _progressBuilder = null;
     _progressCurrent = 0;
+    _context?.showCursor();
   }
 
   Future printError(Object? message) async {
