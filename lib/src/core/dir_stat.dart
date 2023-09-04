@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:ansix/ansix.dart';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
 import 'package:repository_url/repository_url.dart';

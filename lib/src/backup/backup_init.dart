@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:ansix/ansix.dart';
 import 'package:interact/interact.dart';
 import 'package:stat_git_workspaces/src/core/dir_stat.dart';
@@ -6,15 +8,13 @@ import 'package:stat_git_workspaces/src/setup/status_table_builder.dart';
 
 import '../util/repository_url.dart';
 
-class BackupInit extends MultiCommand {
+class BackupInit extends StatusMultiCommand with StatusTableBuilder {
   BackupInit() {
     argParser.addOption(
       'user',
       abbr: 'u',
     );
   }
-
-  final builder = StatusTableBuilder();
 
   @override
   String get description => 'Create backup remote for repositories missing one';
@@ -31,8 +31,8 @@ class BackupInit extends MultiCommand {
   );
 
   @override
-  Future<void> processGitRepo(GitRepo repo, CommandMode mode) async {
-    if (await repo.backup != null) return builder.add(repo, statusExisting);
+  Future<StatusResult> processGitRepo(GitRepo repo, CommandMode mode) async {
+    if (await repo.backup != null) return statusExisting;
     final repoName = repo.name;
 
     var org = argResults?['user'];
@@ -69,25 +69,15 @@ class BackupInit extends MultiCommand {
     ]);
 
     if (await cmd.run()) {
-      builder.add(
-        repo,
-        StatusResult.success('Added: $backupRemoteName:$org'),
-      );
+      return StatusResult.success('Added: $backupRemoteName:$org');
     } else {
-      builder.add(
-        repo,
-        StatusResult.error(await cmd.stderr),
-      );
+      return StatusResult.error(await cmd.stderr);
     }
   }
 
   @override
-  Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode) =>
-      builder.add(dir);
-
-  @override
-  Future<int> afterProcess(CommandMode mode) {
-    builder.printToConsole();
-    return super.afterProcess(mode);
+  Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode) {
+    // TODO: implement processNonGitDir
+    throw UnimplementedError();
   }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:ansix/ansix.dart';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart';
 import 'package:stat_git_workspaces/src/core/dir_stat.dart';
@@ -9,7 +10,11 @@ import 'package:stat_git_workspaces/src/util/cli_printer.dart';
 
 import '../../cfg.dart';
 
-abstract class MultiCommand extends Command<int> {
+abstract class TableHeaderEnum {
+  String get desc;
+}
+
+abstract class MultiCommand<T extends TableHeaderEnum, R> extends Command<int> {
   MultiCommand({
     bool addBatchOption = true,
     bool addDryRunOption = true,
@@ -38,19 +43,59 @@ abstract class MultiCommand extends Command<int> {
       help: 'Print print commands instead of running. Implies -b',
       hide: addDryRunOption,
     );
+
+    _table = Map.fromEntries(enumCols.map(
+      (header) => MapEntry(header.desc, <AnsiText>[]),
+    ));
   }
 
   // Override Interface
-  Future<void> processGitRepo(GitRepo repo, CommandMode mode);
-
-  Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode);
-
-  Future<int> afterProcess(CommandMode mode) async => 0;
+  Future<R> processGitRepo(GitRepo repo, CommandMode mode);
 
   String get describeInitAction;
 
+  List<T> get enumCols;
+
+  FutureOr<AnsiText> formatGitRepo({
+    required T header,
+    required GitRepo gitRepo,
+    R? results,
+  });
+
+  // Override interface with defaults
+
+  /// Hook for processing on nonGit directory
+  /// TODO: Use a result object
+  Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode) async {}
+
+  Future<int> afterProcess(CommandMode mode) async {
+    AnsiX.printStyled(build(), textStyle: const AnsiTextStyle());
+    return 0;
+  }
+
+  AnsiText formatNonGit(T header, String repoName) {
+    if (header.desc == _table.keys.first) {
+      return AnsiText(repoName);
+    }
+    if (header.desc == _table.keys.skip(1).first) {
+      return AnsiText(
+        'No Git Repo',
+        foregroundColor: AnsiColor.red,
+      );
+    }
+    return blank;
+  }
+
   // Values
   final config = Config.get();
+
+  late final Map<String, List<AnsiText>> _table;
+
+  final blank = AnsiText(
+    '-',
+    foregroundColor: AnsiColor.grey27,
+    alignment: AnsiTextAlignment.center,
+  );
 
   // Methods
   CommandMode determineCommandMode() {
@@ -90,30 +135,56 @@ abstract class MultiCommand extends Command<int> {
     for (final project in projects) {
       await CliPrinter.I.increaseProgress();
       if (await DirStat.checkIfGitDir(project.path)) {
-        await processGitRepo(
-          GitRepo(
-            root: project,
-            args: argResults!,
-            globalArgs: globalResults,
-            mode: mode,
-          ),
-          mode,
+        final repo = GitRepo(
+          root: project,
+          args: argResults!,
+          globalArgs: globalResults,
+          mode: mode,
         );
+        final result = await processGitRepo(repo, mode);
+        for (final header in enumCols) {
+          _addField(
+            header,
+            await formatGitRepo(
+              header: header,
+              gitRepo: repo,
+              results: result,
+            ),
+          );
+        }
       } else {
-        await processNonGitDir(
-          NonGitRepo(
-            name: DirStat.getNameFromDir(project),
-            args: argResults!,
-            globalArgs: globalResults,
-          ),
-          mode,
+        final nonRepo = NonGitRepo(
+          name: DirStat.getNameFromDir(project),
+          args: argResults!,
+          globalArgs: globalResults,
         );
+        await processNonGitDir(nonRepo, mode);
+        for (final header in enumCols) {
+          _addField(header, formatNonGit(header, nonRepo.name));
+        }
       }
     }
 
     await CliPrinter.I.finishProgress();
 
     return afterProcess(mode);
+  }
+
+  AnsiTable build() => AnsiTable.fromMap(
+        _table,
+        headerTextTheme: AnsiTextTheme(
+          style: AnsiTextStyle(
+            bold: true,
+          ),
+          foregroundColor: AnsiColor.cyan1,
+        ),
+        border: AnsiBorder(type: AnsiBorderType.header),
+      );
+
+  // Util
+
+  void _addField(T header, AnsiText value) {
+    _table[header.desc]!.add(value);
   }
 }
 

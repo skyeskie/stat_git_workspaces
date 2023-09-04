@@ -1,7 +1,27 @@
 import 'package:ansix/ansix.dart';
-import 'package:stat_git_workspaces/src/core/table_builder.dart';
+import 'package:stat_git_workspaces/src/core/multi_command.dart';
 
 import '../core/dir_stat.dart';
+
+typedef StatusMultiCommand = MultiCommand<StatusHeaders, StatusResult>;
+
+/// Status table builder - MultiCommand results displayed as table
+/// Headers defined in [StatusHeaders]
+mixin StatusTableBuilder on StatusMultiCommand {
+  @override
+  AnsiText formatGitRepo({
+    required StatusHeaders header,
+    required GitRepo gitRepo,
+    StatusResult? results,
+  }) =>
+      switch (header) {
+        StatusHeaders.name => AnsiText(gitRepo.name),
+        StatusHeaders.status => (results ?? StatusResult()).asAnsiText(),
+      };
+
+  @override
+  List<StatusHeaders> get enumCols => StatusHeaders.values;
+}
 
 enum StatusHeaders implements TableHeaderEnum {
   name('Repository'),
@@ -30,20 +50,4 @@ class StatusResult {
         foregroundColor: color,
         alignment: AnsiTextAlignment.center,
       );
-}
-
-class StatusTableBuilder extends TableBuilder<StatusHeaders, StatusResult> {
-  @override
-  AnsiText addGitRow({
-    required StatusHeaders header,
-    required GitRepo gitRepo,
-    StatusResult? results,
-  }) =>
-      switch (header) {
-        StatusHeaders.name => AnsiText(gitRepo.name),
-        StatusHeaders.status => (results ?? StatusResult()).asAnsiText(),
-      };
-
-  @override
-  List<StatusHeaders> get enumCols => StatusHeaders.values;
 }

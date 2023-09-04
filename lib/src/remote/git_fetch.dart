@@ -1,37 +1,34 @@
+import 'dart:async';
+
 import 'package:ansix/ansix.dart';
 import 'package:stat_git_workspaces/src/core/dir_stat.dart';
 import 'package:stat_git_workspaces/src/core/multi_command.dart';
 import 'package:stat_git_workspaces/src/remote/fetch_branch_result.dart';
-import 'package:stat_git_workspaces/src/stat/remote_table_builder.dart';
+import 'package:stat_git_workspaces/src/remote/remote_multi_cmd.dart';
 import 'package:stat_git_workspaces/src/util/cli_printer.dart';
 
 import '../core/git_remote.dart';
 
-class GitFetch extends MultiCommand {
+typedef RemoteInfo = Map<String, List<String>>;
+
+class GitFetch extends RemoteMultiCmd<RemoteInfo> {
   GitFetch() {
     argParser.addFlag('all', defaultsTo: false);
   }
 
   @override
+  String get name => 'fetch';
+
+  @override
   String get describeInitAction => 'Fetching repositories';
 
-  final builder = RemoteTableBuilder<Map<String, List<String>>>(
-    formatRemote: formatRemoteFetchResults,
-  );
+  @override
+  String get description => 'Run fetch on remotes';
 
-  static AnsiText formatRemoteFetchResults(
-    GitRemote? remote,
-    Map<String, List<String>>? results, {
-    AnsiColor noRemoteColoring = RemoteTableBuilder.defaultNoRemoteColoring,
-  }) {
-    final errorOut = RemoteTableBuilder.formatRemoteErrorConditions(
-      remote,
-      noRemoteColoring: noRemoteColoring,
-    );
-    if (errorOut != null) return errorOut;
-    assert(remote != null); //Handled in errorOut
-
-    final resultsForRemote = results?[remote!.name];
+  @override
+  Future<AnsiText> formatRemoteColumn(
+      GitRemote remote, Map<String, List<String>>? results) async {
+    final resultsForRemote = results?[remote.name];
 
     if (resultsForRemote == null || resultsForRemote.isEmpty) {
       return AnsiText(
@@ -48,13 +45,7 @@ class GitFetch extends MultiCommand {
   }
 
   @override
-  String get description => 'Run fetch on remotes';
-
-  @override
-  String get name => 'fetch';
-
-  @override
-  Future<void> processGitRepo(GitRepo repo, CommandMode mode) async {
+  Future<RemoteInfo> processGitRepo(GitRepo repo, CommandMode mode) async {
     // CliPrinter.debug('process repo: ${repo.name}');
     final remoteConfigs = await repo.remoteNames;
     // Default is to use [origin, backup, upstream] repositories
@@ -73,7 +64,7 @@ class GitFetch extends MultiCommand {
       remotesResults[remoteName] = await processSingleRemote(repo, remoteName);
     }
 
-    builder.add(repo, remotesResults);
+    return remotesResults;
 
     // Will run all remotes
     // scan for "error: could not fetch <name>" on error
@@ -113,18 +104,5 @@ class GitFetch extends MultiCommand {
     }
 
     return branchOutputs;
-  }
-
-  @override
-  Future<void> processNonGitDir(
-    NonGitRepo dir,
-    CommandMode mode,
-  ) =>
-      builder.add(dir);
-
-  @override
-  Future<int> afterProcess(CommandMode mode) {
-    builder.printToConsole();
-    return super.afterProcess(mode);
   }
 }

@@ -5,7 +5,7 @@ import 'package:stat_git_workspaces/src/core/dir_stat.dart';
 import 'package:stat_git_workspaces/src/core/multi_command.dart';
 import 'package:stat_git_workspaces/src/setup/status_table_builder.dart';
 
-class BackupPush extends MultiCommand {
+class BackupPush extends StatusMultiCommand with StatusTableBuilder {
   BackupPush() {
     argParser.addFlag(
       'all',
@@ -21,8 +21,6 @@ class BackupPush extends MultiCommand {
       help: 'Push all tags',
     );
   }
-
-  final builder = StatusTableBuilder();
 
   @override
   String get description => 'Push changes to bakcup server';
@@ -49,8 +47,8 @@ class BackupPush extends MultiCommand {
   }
 
   @override
-  Future<void> processGitRepo(GitRepo repo, CommandMode mode) async {
-    if (await repo.backup == null) return builder.add(repo, statusMissing);
+  Future<StatusResult> processGitRepo(GitRepo repo, CommandMode mode) async {
+    if (await repo.backup == null) return statusMissing;
     final String backupRemoteName = globalResults!['backup-remote-name'];
     final cmd = ['push', backupRemoteName];
     final bool pushAll = argResults!['all'];
@@ -63,13 +61,10 @@ class BackupPush extends MultiCommand {
 
     final gitCommand = repo.runGitCmd(cmd);
     if (await gitCommand.run()) {
-      builder.add(repo, StatusResult.success());
+      return StatusResult.success();
     } else {
-      builder.add(
-        repo,
-        StatusResult.error(
-          trimErrorResult(await gitCommand.stderr),
-        ),
+      return StatusResult.error(
+        trimErrorResult(await gitCommand.stderr),
       );
     }
   }
@@ -81,15 +76,5 @@ class BackupPush extends MultiCommand {
     }
     if (errorOutput.contains('No refs in common')) return 'No refs in common';
     return errorOutput.split('\n').first;
-  }
-
-  @override
-  Future<void> processNonGitDir(NonGitRepo dir, CommandMode mode) =>
-      builder.add(dir);
-
-  @override
-  Future<int> afterProcess(CommandMode mode) {
-    builder.printToConsole();
-    return super.afterProcess(mode);
   }
 }
